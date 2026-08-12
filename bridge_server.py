@@ -1,7 +1,8 @@
 import asyncio
 import json
 import os
-from aiohttp import web, ClientSession, WSMsgType
+from aiohttp import web, WSMsgType
+from websockets.asyncio.client import connect
 
 SCANNER_CLIENTS = set()
 
@@ -109,72 +110,75 @@ async def capture_handler(request):
 
 async def twelve_data_loop(app):
     if not TWELVE_DATA_API_KEY:
-        print("ERROR: TWELVE_DATA_API_KEY is missing")
+        print("ERROR: TWELVE_DATA_API_KEY is missing", flush=True)
         return
 
     url = f"{TWELVE_WS_BASE}?apikey={TWELVE_DATA_API_KEY}"
 
     while True:
         try:
-            print("Connecting to Twelve Data...")
+            print("Connecting to Twelve Data...", flush=True)
 
-            async with ClientSession() as session:
-                async with session.ws_connect(
-                    url,
-                    heartbeat=20,
-                    receive_timeout=60,
-                ) as ws:
+            async with connect(
+                url,
+                open_timeout=20,
+                ping_interval=None,
+                additional_headers={
+                    "User-Agent": "999-Signal-Intelligence/1.0"
+                },
+            ) as ws:
 
-                    print("Connected to Twelve Data")
+                print("Connected to Twelve Data", flush=True)
 
-                    await ws.send_json({
-                        "action": "subscribe",
-                        "params": {
-                            "symbols": SYMBOLS
-                        }
-                    })
+                await ws.send(json.dumps({
+                    "action": "subscribe",
+                    "params": {
+                        "symbols": SYMBOLS
+                    }
+                }))
 
-                    print("Subscribed to:", SYMBOLS)
+                print(f"Subscribed to: {SYMBOLS}", flush=True)
 
-                    async def heartbeat_loop():
-                        while True:
-                            await asyncio.sleep(10)
-                            try:
-                                await ws.send_json({
-                                    "action": "heartbeat"
-                                })
-                            except Exception:
-                                return
+                async def heartbeat_loop():
+                    while True:
+                        await asyncio.sleep(10)
+                        try:
+                            await ws.send(json.dumps({
+                                "action": "heartbeat"
+                            }))
+                        except Exception:
+                            return
 
-                    heartbeat_task = asyncio.create_task(
-                        heartbeat_loop()
-                    )
+                heartbeat_task = asyncio.create_task(heartbeat_loop())
 
-                    try:
-                        async for msg in ws:
-                            if msg.type == WSMsgType.TEXT:
-                                try:
-                                    data = json.loads(msg.data)
+                try:
+                    async for raw in ws:
+                        try:
+                            data = json.loads(raw)
 
-                                    if data.get("event") == "subscribe-status":
-                                        print("Twelve Data:", data)
+                            if data.get("event") == "subscribe-status":
+                                print("Twelve Data status:", data, flush=True)
 
-                                    await broadcast_tick(data)
+                            if data.get("event") == "price":
+                                print(
+                                    "Twelve Data tick:",
+                                    data.get("symbol"),
+                                    data.get("price"),
+                                    flush=True,
+                                )
 
-                                except Exception as e:
-                                    print("Twelve Data parse error:", e)
+                            await broadcast_tick(data)
 
-                            elif msg.type == WSMsgType.ERROR:
-                                print("Twelve Data socket error:", ws.exception())
-                                break
+                        except Exception as e:
+                            print("Twelve Data parse error:", repr(e), flush=True)
 
-                    finally:
-                        heartbeat_task.cancel()
+                finally:
+                    heartbeat_task.cancel()
 
         except Exception as e:
-            print("Twelve Data connection error:", repr(e))
+            print("Twelve Data connection error:", repr(e), flush=True)
 
-        print("Reconnecting to Twelve Data in 5 seconds...")
+        print("Reconnecting to Twelve Data in 5 seconds...", flush=True)
         await asyncio.sleep(5)
 
 

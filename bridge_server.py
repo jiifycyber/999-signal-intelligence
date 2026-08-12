@@ -1,77 +1,64 @@
-import asyncio
 import json
 import os
-import websockets
+from aiohttp import web, WSMsgType
 
 SCANNER_CLIENTS = set()
-CAPTURE_CLIENTS = set()
 
-async def handler(ws):
-    path = ws.request.path
+async def health(request):
+    return web.Response(text="999 Signal Intelligence relay online")
 
-    if path == "/scanner":
-        SCANNER_CLIENTS.add(ws)
-        print("Scanner connected")
+async def scanner_handler(request):
+    ws = web.WebSocketResponse(heartbeat=20)
+    await ws.prepare(request)
+    SCANNER_CLIENTS.add(ws)
+    print("Scanner connected")
 
-        try:
-            await ws.wait_closed()
-        finally:
-            SCANNER_CLIENTS.discard(ws)
-            print("Scanner disconnected")
+    try:
+        async for msg in ws:
+            if msg.type == WSMsgType.ERROR:
+                print("Scanner error:", ws.exception())
+    finally:
+        SCANNER_CLIENTS.discard(ws)
+        print("Scanner disconnected")
 
-    elif path == "/capture":
-        CAPTURE_CLIENTS.add(ws)
-        print("Capture connected")
+    return ws
 
-        try:
-            async for message in ws:
-                try:
-                    data = json.loads(message)
+async def capture_handler(request):
+    ws = web.WebSocketResponse(heartbeat=20)
+    await ws.prepare(request)
+    print("Capture connected")
 
-                    clean = json.dumps({
-                        "symbol": data.get("symbol"),
-                        "timestamp": float(data.get("timestamp")),
-                        "price": float(data.get("price")),
-                    })
+    try:
+        async for msg in ws:
+            if msg.type != WSMsgType.TEXT:
+                continue
 
-                    dead = []
+            try:
+                data = json.loads(msg.data)
+                clean = json.dumps({
+                    "symbol": data.get("symbol"),
+                    "timestamp": float(data.get("timestamp")),
+                    "price": float(data.get("price")),
+                })
 
-                    for client in list(SCANNER_CLIENTS):
-                        try:
-                            await client.send(clean)
-                        except Exception:
-                            dead.append(client)
-
-                    for client in dead:
+                for client in list(SCANNER_CLIENTS):
+                    try:
+                        await client.send_str(clean)
+                    except Exception:
                         SCANNER_CLIENTS.discard(client)
 
-                except Exception as e:
-                    print("Bad message:", e)
+            except Exception as e:
+                print("Bad message:", e)
+    finally:
+        print("Capture disconnected")
 
-        finally:
-            CAPTURE_CLIENTS.discard(ws)
-            print("Capture disconnected")
+    return ws
 
-    else:
-        await ws.close(code=1008, reason="Use /scanner or /capture")
-
-
-async def main():
-    port = int(os.environ.get("PORT", "10000"))
-
-    print(f"999 Signal Intelligence relay running on port {port}")
-    print("Scanner endpoint: /scanner")
-    print("Capture endpoint: /capture")
-
-    async with websockets.serve(
-        handler,
-        "0.0.0.0",
-        port,
-        ping_interval=20,
-        ping_timeout=20,
-    ):
-        await asyncio.Future()
-
+app = web.Application()
+app.router.add_get("/", health)
+app.router.add_get("/scanner", scanner_handler)
+app.router.add_get("/capture", capture_handler)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    port = int(os.environ.get("PORT", "10000"))
+    web.run_app(app, host="0.0.0.0", port=port)

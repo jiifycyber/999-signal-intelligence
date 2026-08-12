@@ -1,1 +1,1 @@
-websockets>=12,<16
+aiohttp>=3.12,<4

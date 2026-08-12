@@ -206,18 +206,47 @@ app.router.add_get("/", health)
 app.router.add_get("/scanner", scanner_handler)
 app.router.add_get("/capture", capture_handler)
 
-app.on_startup.append(start_background_tasks)
-app.on_cleanup.append(cleanup_background_tasks)
 
-
-if __name__ == "__main__":
+async def main():
     port = int(os.environ.get("PORT", "10000"))
 
-    print("999 Signal Intelligence Render backend starting")
-    print("Twelve Data key configured:", bool(TWELVE_DATA_API_KEY))
+    runner = web.AppRunner(app)
+    await runner.setup()
 
-    web.run_app(
-        app,
+    site = web.TCPSite(
+        runner,
         host="0.0.0.0",
         port=port,
     )
+
+    await site.start()
+
+    print(
+        f"999 Signal Intelligence server listening on port {port}",
+        flush=True,
+    )
+    print(
+        "Twelve Data key configured:",
+        bool(TWELVE_DATA_API_KEY),
+        flush=True,
+    )
+
+    twelve_task = asyncio.create_task(
+        twelve_data_loop(app)
+    )
+
+    try:
+        await asyncio.Event().wait()
+    finally:
+        twelve_task.cancel()
+
+        try:
+            await twelve_task
+        except asyncio.CancelledError:
+            pass
+
+        await runner.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

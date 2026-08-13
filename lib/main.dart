@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'login_screen.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,7 +8,12 @@ import 'models/scan_signal.dart';
 import 'services/scanner_controller.dart';
 import 'services/market_data_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: 'https://qspasdiorjxoymvenqsj.supabase.co',
+    anonKey: 'sb_publishable_-SrzGiZFJSvCCQhTa9O31Q_QFbwbawj',
+  );
   runApp(const NexusApp());
 }
 
@@ -19,7 +26,16 @@ class NexusApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: '999 Signal Intelligence 2.0',
       theme: ThemeData.dark(),
-      home: const NexusDashboard(),
+      home: StreamBuilder<AuthState>(
+          stream: Supabase.instance.client.auth.onAuthStateChange,
+          builder: (context, snapshot) {
+            final session = Supabase.instance.client.auth.currentSession;
+            if (session == null) {
+              return const LoginScreen();
+            }
+            return const NexusDashboard();
+          },
+        ),
     );
   }
 }

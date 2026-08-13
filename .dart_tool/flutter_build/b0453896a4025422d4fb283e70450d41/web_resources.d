@@ -1,0 +1,1 @@
+ /Users/jontariuscooper/Downloads/NEXUS_FX_SCANNER_FLUTTER_TWIN/build/web/manifest.json:  /Users/jontariuscooper/Downloads/NEXUS_FX_SCANNER_FLUTTER_TWIN/web/index.html /Users/jontariuscooper/Downloads/NEXUS_FX_SCANNER_FLUTTER_TWIN/web/manifest.json

@@ -1,0 +1,10 @@
+{
+  "name": "999 Signal Intelligence 2.0",
+  "short_name": "999 Signal Intelligence 2.0",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#020811",
+  "theme_color": "#020811",
+  "description": "999 Signal Intelligence 2.0 Flutter Twin",
+  "orientation": "landscape"
+}

@@ -11,10 +11,6 @@ async def root():
 async def health():
     return {"status": "ok"}
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", "10000"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
 
 import httpx
 
@@ -38,3 +34,8 @@ async def price(symbol: str):
         data = response.json()
 
     return data
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", "10000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

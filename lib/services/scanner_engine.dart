@@ -86,7 +86,21 @@ class ScannerEngine {
 
     // 999 Signal Intelligence confirmation gate:
     // Require both a strong score and clear separation between BUY and SELL.
-    if (winningScore < 65 || scoreGap < 20) {
+    // 999 Intelligence V3 confirmation gate.
+    //
+    // A trade requires:
+    // 1. Strong absolute setup score.
+    // 2. Clear directional separation.
+    // 3. Extra separation for marginal setups.
+    //
+    // Mixed markets automatically remain WAIT.
+    final requiredGap = winningScore >= 80
+        ? 15.0
+        : winningScore >= 70
+            ? 20.0
+            : 25.0;
+
+    if (winningScore < 68 || scoreGap < requiredGap) {
       direction = TradeDirection.wait;
     } else if (bullishScore > bearishScore) {
       direction = TradeDirection.buy;
@@ -97,9 +111,20 @@ class ScannerEngine {
     }
 
     // Confidence reflects both setup strength and directional agreement.
-    final agreementBonus = min(scoreGap * 0.20, 10.0);
-    final confidence =
-        (winningScore + agreementBonus).clamp(0.0, 100.0).toDouble();
+    // V3 confidence combines absolute strength and directional agreement.
+    // This remains a setup-strength score until historical calibration
+    // converts it into a measured win probability.
+    final agreementBonus = min(scoreGap * 0.15, 8.0);
+
+    final conflictPenalty = scoreGap < 15
+        ? 12.0
+        : scoreGap < 25
+            ? 5.0
+            : 0.0;
+
+    final confidence = (winningScore + agreementBonus - conflictPenalty)
+        .clamp(0.0, 100.0)
+        .toDouble();
 
     final isJpy = quote.symbol.contains('JPY');
     final riskDistance = isJpy ? 0.150 : 0.00150;

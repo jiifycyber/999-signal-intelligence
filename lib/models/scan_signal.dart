@@ -63,7 +63,36 @@ class ScanSignal {
   bool get canEnterNow =>
       !isExpired &&
       direction != TradeDirection.wait &&
+      confidence >= 70.0 &&
       entryTimingText == 'ENTER NOW';
+
+  /// V3 setup-quality classification.
+  String get setupQuality {
+    if (confidence >= 90) return 'ELITE';
+    if (confidence >= 80) return 'STRONG';
+    if (confidence >= 70) return 'CONFIRMED';
+    if (confidence >= 60) return 'FORMING';
+    return 'WEAK';
+  }
+
+  /// V3 one-minute execution state.
+  String get executionState {
+    if (direction == TradeDirection.wait) {
+      if (confidence >= 60) return 'SETUP FORMING';
+      return 'WAIT';
+    }
+
+    if (isExpired) return 'EXPIRED';
+
+    final seconds = age.inSeconds;
+
+    if (confidence < 70) return 'SETUP FORMING';
+    if (seconds <= 10) return 'GET READY';
+    if (seconds <= 20) return 'ENTER NOW';
+    if (seconds <= 45) return 'TOO LATE';
+
+    return 'SKIP';
+  }
 
   String get directionText {
     if (isExpired && direction != TradeDirection.wait) {

@@ -7,11 +7,7 @@ app = FastAPI(title="999 Signal Intelligence API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://jiifycyber.github.io",
-        "http://localhost:3000",
-        "http://localhost:5000",
-    ],
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["GET"],
     allow_headers=["*"],

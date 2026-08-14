@@ -42,3 +42,52 @@ async def quote(symbol: str):
         "price": float(data["price"]),
         "source": "Twelve Data",
     }
+
+
+# ===== TWELVE DATA LIVE WEBSOCKET BRIDGE =====
+import json
+import websockets
+from fastapi import WebSocket, WebSocketDisconnect
+
+@app.websocket("/ws")
+async def twelve_data_websocket_bridge(websocket: WebSocket):
+    await websocket.accept()
+
+    if not API_KEY:
+        await websocket.send_json({
+            "event": "error",
+            "message": "TWELVE_DATA_API_KEY missing"
+        })
+        await websocket.close()
+        return
+
+    symbols = websocket.query_params.get("symbols", "EUR/USD")
+
+    upstream_url = (
+        "wss://ws.twelvedata.com/v1/quotes/price"
+        f"?apikey={API_KEY}"
+    )
+
+    try:
+        async with websockets.connect(upstream_url) as upstream:
+            await upstream.send(json.dumps({
+                "action": "subscribe",
+                "params": {
+                    "symbols": symbols
+                }
+            }))
+
+            async for message in upstream:
+                await websocket.send_text(message)
+
+    except WebSocketDisconnect:
+        pass
+
+    except Exception as exc:
+        try:
+            await websocket.send_json({
+                "event": "error",
+                "message": str(exc)
+            })
+        except Exception:
+            pass

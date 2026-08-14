@@ -60,6 +60,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Image.asset(
+                      'assets/images/999_Signal_Intelligence.png',
+                      height: 120,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 18),
                     const Text(
                       '999 SIGNAL INTELLIGENCE 2.0',
                       textAlign: TextAlign.center,

@@ -1,0 +1,10 @@
+{
+  "name": "NEXUS FX Scanner Pro",
+  "short_name": "NEXUS FX",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#020811",
+  "theme_color": "#020811",
+  "description": "NEXUS FX Scanner Pro Flutter Twin",
+  "orientation": "landscape"
+}

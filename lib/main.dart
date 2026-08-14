@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'models/scan_signal.dart';
 import 'services/scanner_controller.dart';
 import 'services/market_data_service.dart';
+import 'ai/agent_duke_command_center.dart';
+import 'modules/specialized/module_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,15 +29,15 @@ class NexusApp extends StatelessWidget {
       title: '999 Signal Intelligence 2.0',
       theme: ThemeData.dark(),
       home: StreamBuilder<AuthState>(
-          stream: Supabase.instance.client.auth.onAuthStateChange,
-          builder: (context, snapshot) {
-            final session = Supabase.instance.client.auth.currentSession;
-            if (session == null) {
-              return const LoginScreen();
-            }
-            return const NexusDashboard();
-          },
-        ),
+        stream: Supabase.instance.client.auth.onAuthStateChange,
+        builder: (context, snapshot) {
+          final session = Supabase.instance.client.auth.currentSession;
+          if (session == null) {
+            return const LoginScreen();
+          }
+          return const NexusDashboard();
+        },
+      ),
     );
   }
 }
@@ -222,22 +224,25 @@ class _NexusDashboardState extends State<NexusDashboard> {
   void openPanel(String title) {
     setState(() => selectedModule = title);
 
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF081525),
-        title: Text(title),
-        content: Text(
-          '$title module activated.\n\n'
-          'This control is now connected to the Flutter interface.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CLOSE'),
-          ),
-        ],
-      ),
+    final signal = signalFor(selectedPair);
+
+    openSpecializedModule(
+      context,
+      title,
+      pair: selectedPair,
+      timeframe: selectedTimeframe,
+      price: currentPriceFor(selectedPair),
+      direction: signal?.directionText ?? 'WAIT',
+      confidence: signal?.confidence ?? 0.0,
+      score: signal?.score ?? 0.0,
+      trend: signal?.trend ?? 'Waiting for signal',
+      momentum: signal?.momentum ?? 'Waiting for signal',
+      setup: signal?.setup ?? 'Waiting for signal',
+      entry: signal?.entry,
+      stopLoss: signal?.stopLoss,
+      tp1: signal?.takeProfit1,
+      tp2: signal?.takeProfit2,
+      tp3: signal?.takeProfit3,
     );
   }
 
@@ -370,8 +375,655 @@ class _NexusDashboardState extends State<NexusDashboard> {
     );
   }
 
+  Widget _buildMobileDashboard(BuildContext context) {
+    final signal = signalFor(selectedPair);
+
+    final direction = signal?.directionText ?? 'WAIT';
+    final confidence = signal?.confidence ?? 0.0;
+    final trend = signal?.trend ?? 'Waiting for signal';
+    final momentum = signal?.momentum ?? 'Waiting for signal';
+    final setup = signal?.setup ?? 'Waiting for signal';
+
+    final price = currentPriceFor(selectedPair);
+
+    String formatPrice(double? value, String symbol) {
+      if (value == null) return '--';
+      final decimals = symbol.contains('JPY') ? 3 : 5;
+      return value.toStringAsFixed(decimals);
+    }
+
+    final signalColor = direction == 'BUY'
+        ? Colors.greenAccent
+        : direction == 'SELL'
+            ? Colors.redAccent
+            : Colors.orangeAccent;
+
+    const moduleNames = <String>[
+      'AI Opportunity Scan',
+      'Multi-Timeframe Alignment',
+      'Order Flow & Liquidity',
+      'Sentiment Engine',
+      'Macro & Fundamental',
+      'Volatility & Risk',
+      'Trade Automation',
+      'Market Heatmap',
+      'Global Sessions',
+      'News & Macro Impact',
+      'Pair Deep Scanner',
+      'Trade Plan AI',
+      'Smart Money Tracker',
+      'AI Prediction Engine',
+      'Market Regime Detection',
+      'Risk & Position Sizing',
+      'Alerts & Automation',
+    ];
+
+    const scanPairs = <String>[
+      'XAUUSD',
+      'EURUSD',
+      'GBPJPY',
+      'AUDUSD',
+      'USDCHF',
+      'USDCAD',
+      'NZDUSD',
+      'EURGBP',
+    ];
+
+    Widget mobileCard({
+      required Widget child,
+      EdgeInsetsGeometry padding = const EdgeInsets.all(14),
+    }) {
+      return Container(
+        width: double.infinity,
+        padding: padding,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1927),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFF1D4258),
+          ),
+        ),
+        child: child,
+      );
+    }
+
+    Widget stat(String label, String value, {Color? color}) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF78909C),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color ?? Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF030A11),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // MOBILE HEADER
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+              decoration: const BoxDecoration(
+                color: Color(0xFF07131F),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Color(0xFF16384B),
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '999 SIGNAL INTELLIGENCE 2.0',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'AI • QUANT • ORDER FLOW • SMART MONEY',
+                          style: TextStyle(
+                            color: Color(0xFF58D8FF),
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0A2B1D),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.greenAccent,
+                      ),
+                    ),
+                    child: const Text(
+                      'LIVE',
+                      style: TextStyle(
+                        color: Colors.greenAccent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // SELECTED PAIR
+                    mobileCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'SELECTED PAIR',
+                            style: TextStyle(
+                              color: Color(0xFF7DDFFF),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  selectedPair,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 25,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    formatPrice(price, selectedPair),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    selectedTimeframe,
+                                    style: const TextStyle(
+                                      color: Color(0xFF7DDFFF),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: signalColor.withValues(alpha: .08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: signalColor.withValues(alpha: .45),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: stat(
+                                    'DUKE DECISION',
+                                    direction,
+                                    color: signalColor,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: stat(
+                                    'CONFIDENCE',
+                                    '${confidence.toStringAsFixed(1)}%',
+                                    color: confidence >= 85
+                                        ? Colors.greenAccent
+                                        : Colors.orangeAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(child: stat('TREND', trend)),
+                              const SizedBox(width: 8),
+                              Expanded(child: stat('MOMENTUM', momentum)),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          stat('SETUP', setup),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // LIVE SCANNER
+                    const Text(
+                      'LIVE OPPORTUNITY SCANNER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    mobileCard(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Column(
+                        children: [
+                          for (final pair in scanPairs)
+                            Builder(
+                              builder: (context) {
+                                final rowSignal = signalFor(pair);
+                                final rowPrice = currentPriceFor(pair);
+                                final rowDirection =
+                                    rowSignal?.directionText ?? 'WAIT';
+                                final rowConfidence =
+                                    rowSignal?.confidence ?? 0.0;
+
+                                final rowColor = rowDirection == 'BUY'
+                                    ? Colors.greenAccent
+                                    : rowDirection == 'SELL'
+                                        ? Colors.redAccent
+                                        : Colors.orangeAccent;
+
+                                return InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedPair = pair;
+                                    });
+                                    showSignalDetails(pair);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 11,
+                                    ),
+                                    decoration: const BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Color(0xFF173247),
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 70,
+                                          child: Text(
+                                            pair,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            formatPrice(rowPrice, pair),
+                                            style: const TextStyle(
+                                              color: Color(0xFFB0BEC5),
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 55,
+                                          alignment: Alignment.center,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                rowColor.withValues(alpha: .10),
+                                            borderRadius:
+                                                BorderRadius.circular(7),
+                                            border: Border.all(
+                                              color: rowColor.withValues(
+                                                  alpha: .5),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            rowDirection,
+                                            style: TextStyle(
+                                              color: rowColor,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        SizedBox(
+                                          width: 48,
+                                          child: Text(
+                                            '${rowConfidence.toStringAsFixed(1)}%',
+                                            textAlign: TextAlign.right,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // AGENT DUKE
+                    mobileCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 17,
+                                backgroundColor: Color(0xFF173247),
+                                child: Text(
+                                  'D',
+                                  style: TextStyle(
+                                    color: Colors.orangeAccent,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'AGENT DUKE DA BOSS X',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    Text(
+                                      'AI COMMAND CENTER • ONLINE',
+                                      style: TextStyle(
+                                        color: Colors.greenAccent,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            confidence <= 0
+                                ? 'Duke is waiting for a qualified live scanner signal.'
+                                : '$selectedPair is currently showing a $direction bias with ${confidence.toStringAsFixed(1)}% scanner confidence. Trend: $trend. Momentum: $momentum.',
+                            style: const TextStyle(
+                              color: Color(0xFFC7D6DF),
+                              fontSize: 12,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () =>
+                                      openPanel('Pair Deep Scanner'),
+                                  child: const Text('DEEP SCAN'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => openPanel('Trade Plan AI'),
+                                  child: const Text('TRADE PLAN'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // TRADE PLAN SNAPSHOT
+                    mobileCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'TRADE PLAN SNAPSHOT',
+                            style: TextStyle(
+                              color: Color(0xFF7DDFFF),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          stat(
+                            'ENTRY',
+                            formatPrice(signal?.entry, selectedPair),
+                          ),
+                          const SizedBox(height: 8),
+                          stat(
+                            'STOP LOSS',
+                            formatPrice(signal?.stopLoss, selectedPair),
+                            color: Colors.redAccent,
+                          ),
+                          const SizedBox(height: 8),
+                          stat(
+                            'TP1',
+                            formatPrice(signal?.takeProfit1, selectedPair),
+                            color: Colors.greenAccent,
+                          ),
+                          const SizedBox(height: 8),
+                          stat(
+                            'TP2',
+                            formatPrice(signal?.takeProfit2, selectedPair),
+                            color: Colors.greenAccent,
+                          ),
+                          const SizedBox(height: 8),
+                          stat(
+                            'TP3',
+                            formatPrice(signal?.takeProfit3, selectedPair),
+                            color: Colors.greenAccent,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ALL MODULES
+                    const Text(
+                      'INTELLIGENCE MODULES',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: moduleNames.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 2.25,
+                      ),
+                      itemBuilder: (context, index) {
+                        final title = moduleNames[index];
+
+                        return InkWell(
+                          onTap: () => openPanel(title),
+                          borderRadius: BorderRadius.circular(11),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0B1927),
+                              borderRadius: BorderRadius.circular(11),
+                              border: Border.all(
+                                color: const Color(0xFF1D4258),
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                title,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // MOBILE QUICK ACTION BAR
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 7,
+              ),
+              decoration: const BoxDecoration(
+                color: Color(0xFF07131F),
+                border: Border(
+                  top: BorderSide(
+                    color: Color(0xFF173247),
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => openPanel('AI Opportunity Scan'),
+                      child: const Text(
+                        'SCAN',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => openPanel('Market Heatmap'),
+                      child: const Text(
+                        'RADAR',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => openPanel('AI Prediction Engine'),
+                      child: const Text(
+                        'AI',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => openPanel('Risk & Position Sizing'),
+                      child: const Text(
+                        'RISK',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => openPanel('Alerts & Automation'),
+                      child: const Text(
+                        'ALERTS',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width < 700) {
+      return _buildMobileDashboard(context);
+    }
+
     const designWidth = 1536.0;
     const designHeight = 1024.0;
 
@@ -753,47 +1405,44 @@ class _NexusDashboardState extends State<NexusDashboard> {
                         ),
                       ),
 
-                      // PAIR DEEP SCANNER
-                      hit(
-                        left: 1318,
-                        top: 151,
-                        width: 100,
-                        height: 34,
-                        onTap: () {
-                          message('Pair selector opened');
-                        },
+                      // HIDE OLD SCANNING COMBINATIONS LABEL
+                      Positioned(
+                        left: 1060,
+                        top: 238,
+                        width: 225,
+                        height: 26,
+                        child: Container(
+                          color: const Color(0xFF07131F),
+                        ),
                       ),
 
-                      hit(
-                        left: 1420,
-                        top: 151,
-                        width: 43,
-                        height: 34,
-                        onTap: () {
-                          setState(() {
-                            selectedTimeframe =
-                                selectedTimeframe == 'H1' ? 'H4' : 'H1';
-                          });
-                          message(
-                            'Deep Scanner: $selectedTimeframe',
-                          );
-                        },
-                      ),
+                      // AGENT DUKE DA BOSS X COMMAND CENTER
+                      Positioned(
+                        right: 18,
+                        top: 125,
+                        child: AgentDukeCommandCenter(
+                          selectedPair: selectedPair,
+                          result: scannerController.dukeResults[selectedPair],
+                          onDeepScan: () {
+                            setState(() {
+                              selectedTimeframe =
+                                  selectedTimeframe == 'H1' ? 'H4' : 'H1';
+                            });
 
-                      // WATCHLIST
-                      hit(
-                        left: 1326,
-                        top: 783,
-                        width: 170,
-                        height: 34,
-                        onTap: () {
-                          setState(() => watchlisted = !watchlisted);
-                          message(
-                            watchlisted
-                                ? '$selectedPair added to watchlist'
-                                : '$selectedPair removed from watchlist',
-                          );
-                        },
+                            message(
+                              'Duke Deep Scan: $selectedPair • $selectedTimeframe',
+                            );
+                          },
+                          onWatchlist: () {
+                            setState(() => watchlisted = !watchlisted);
+
+                            message(
+                              watchlisted
+                                  ? '$selectedPair added to watchlist'
+                                  : '$selectedPair removed from watchlist',
+                            );
+                          },
+                        ),
                       ),
 
                       // SCANNER ROWS

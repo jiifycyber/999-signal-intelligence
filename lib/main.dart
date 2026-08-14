@@ -949,27 +949,35 @@ class _NexusDashboardState extends State<NexusDashboard> {
                           ),
                           const SizedBox(height: 8),
                           stat(
-                            'STOP LOSS',
-                            formatPrice(signal?.stopLoss, selectedPair),
+                            'BUY ENTRY TIME',
+                            signal == null
+                                ? '--'
+                                : signal.direction == TradeDirection.buy
+                                    ? signal.entryTimingText
+                                    : 'WAIT',
+                            color: Colors.greenAccent,
+                          ),
+                          const SizedBox(height: 8),
+                          stat(
+                            'SELL ENTRY TIME',
+                            signal == null
+                                ? '--'
+                                : signal.direction == TradeDirection.sell
+                                    ? signal.entryTimingText
+                                    : 'WAIT',
                             color: Colors.redAccent,
                           ),
                           const SizedBox(height: 8),
                           stat(
-                            'TP1',
-                            formatPrice(signal?.takeProfit1, selectedPair),
-                            color: Colors.greenAccent,
+                            'CURRENT ACTION',
+                            signal?.directionText ?? 'WAIT',
                           ),
                           const SizedBox(height: 8),
                           stat(
-                            'TP2',
-                            formatPrice(signal?.takeProfit2, selectedPair),
-                            color: Colors.greenAccent,
-                          ),
-                          const SizedBox(height: 8),
-                          stat(
-                            'TP3',
-                            formatPrice(signal?.takeProfit3, selectedPair),
-                            color: Colors.greenAccent,
+                            'CONFIDENCE',
+                            signal == null
+                                ? '--'
+                                : '${signal.confidence.toStringAsFixed(1)}%',
                           ),
                         ],
                       ),

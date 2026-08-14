@@ -16,8 +16,6 @@ class TwelveDataStreamTick {
 }
 
 class TwelveDataStreamService {
-  static const String _apiKey = String.fromEnvironment('TWELVE_DATA_API_KEY');
-
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
 
@@ -29,35 +27,26 @@ class TwelveDataStreamService {
   bool get isConnected => _channel != null;
 
   Future<void> connect(List<String> symbols) async {
-    if (_apiKey.isEmpty) {
-      throw StateError(
-        'TWELVE_DATA_API_KEY missing. '
-        'Run Flutter with --dart-define=TWELVE_DATA_API_KEY=YOUR_KEY',
-      );
-    }
-
     await disconnect();
 
+    if (symbols.isEmpty) return;
+
+    final encodedSymbols = Uri.encodeQueryComponent(symbols.join(','));
+
     final uri = Uri.parse(
-      'wss://ws.twelvedata.com/v1/quotes/price?apikey=$_apiKey',
+      'wss://nine99-signal-intelligence.onrender.com/ws'
+      '?symbols=$encodedSymbols',
     );
 
     _channel = WebSocketChannel.connect(uri);
 
     await _channel!.ready;
 
-    _channel!.sink.add(
-      jsonEncode({
-        'action': 'subscribe',
-        'params': {
-          'symbols': symbols.join(','),
-        },
-      }),
-    );
-
     _subscription = _channel!.stream.listen(
       _handleMessage,
-      onError: (_) {},
+      onError: (_) {
+        _channel = null;
+      },
       onDone: () {
         _channel = null;
       },
@@ -72,7 +61,11 @@ class TwelveDataStreamService {
       if (data['event'] != 'price') return;
 
       final symbol = '${data['symbol']}';
-      final price = double.tryParse('${data['price']}');
+      final rawPrice = data['price'];
+
+      final price = rawPrice is num
+          ? rawPrice.toDouble()
+          : double.tryParse(rawPrice?.toString() ?? '');
 
       if (symbol.isEmpty || price == null) return;
 

@@ -7,10 +7,14 @@ import 'twelve_data_stream_service.dart';
 enum MarketMode { demo, live }
 
 class MarketDataService {
-  MarketMode mode = MarketMode.demo;
+  MarketMode mode = MarketMode.live;
+
   final TwelveDataStreamService _streamService = TwelveDataStreamService();
 
   StreamSubscription<TwelveDataStreamTick>? _streamSubscription;
+
+  final StreamController<List<ForexQuote>> _controller =
+      StreamController<List<ForexQuote>>.broadcast();
 
   final Map<String, double> _livePrices = {};
 
@@ -27,37 +31,32 @@ class MarketDataService {
     'EUR/GBP',
   ];
 
-  final StreamController<List<ForexQuote>> _controller =
-      StreamController<List<ForexQuote>>.broadcast();
-
-  Timer? _timer;
-
   Stream<List<ForexQuote>> get quoteStream => _controller.stream;
 
   void start() {
-    _timer?.cancel();
-    _livePrices.clear();
     _startLiveStream();
   }
 
   void setMode(MarketMode newMode) {
     mode = newMode;
-    _livePrices.clear();
+
+    // LIVE and DEMO both use genuine Twelve Data market ticks.
     _startLiveStream();
   }
 
   void setTimeframe(String newTimeframe) {
     timeframe = newTimeframe;
-    _refresh();
   }
 
   Future<void> _startLiveStream() async {
     await _streamSubscription?.cancel();
+    _streamSubscription = null;
+
+    await _streamService.disconnect();
 
     _streamSubscription = _streamService.tickStream.listen((tick) {
-      // PURE LIVE DATA:
-      // Current and previous LIVE prices come only from Twelve Data.
       final oldPrice = _livePrices[tick.symbol] ?? tick.price;
+
       _livePrices[tick.symbol] = tick.price;
 
       final quote = ForexQuote(
@@ -76,7 +75,10 @@ class MarketDataService {
 
     try {
       await _streamService.connect(_symbols);
-    } catch (_) {}
+    } catch (_) {
+      // Never substitute fake or simulated prices.
+      // If Twelve Data does not provide a pair, it remains unavailable/REST.
+    }
   }
 
   Future<void> _stopLiveStream() async {
@@ -86,11 +88,10 @@ class MarketDataService {
   }
 
   Future<void> _refresh() async {
-    // LIVE and DEMO both use genuine Twelve Data ticks only.
+    // Prices arrive continuously from Twelve Data through Render WebSocket.
   }
 
   void dispose() {
-    _timer?.cancel();
     _streamSubscription?.cancel();
     _streamService.dispose();
     _controller.close();

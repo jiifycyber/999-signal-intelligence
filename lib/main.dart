@@ -342,16 +342,16 @@ class _NexusDashboardState extends State<NexusDashboard> {
                 'Entry: ${signal.entry.toStringAsFixed(decimals)}',
               ),
               Text(
-                'Stop Loss: ${signal.stopLoss.toStringAsFixed(decimals)}',
+                'Buy Entry Time: ${signal.direction == TradeDirection.buy ? signal.entryTimingText : 'WAIT'}',
               ),
               Text(
-                'TP1: ${signal.takeProfit1.toStringAsFixed(decimals)}',
+                'Sell Entry Time: ${signal.direction == TradeDirection.sell ? signal.entryTimingText : 'WAIT'}',
               ),
               Text(
-                'TP2: ${signal.takeProfit2.toStringAsFixed(decimals)}',
+                'Current Action: ${signal.directionText}',
               ),
               Text(
-                'TP3: ${signal.takeProfit3.toStringAsFixed(decimals)}',
+                'Confidence: ${signal.confidence.toStringAsFixed(1)}%',
               ),
               const SizedBox(height: 10),
               Text(

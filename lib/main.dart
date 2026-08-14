@@ -227,6 +227,12 @@ class _NexusDashboardState extends State<NexusDashboard> {
   void openPanel(String title) {
     setState(() => selectedModule = title);
 
+    // 1-minute Deep Scanner uses the live signal-details panel.
+    if (title == 'Pair Deep Scanner') {
+      showSignalDetails(selectedPair);
+      return;
+    }
+
     final signal = signalFor(selectedPair);
 
     openSpecializedModule(

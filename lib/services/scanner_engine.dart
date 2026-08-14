@@ -80,17 +80,26 @@ class ScannerEngine {
       bearishScore,
     );
 
+    final scoreGap = (bullishScore - bearishScore).abs();
+
     TradeDirection direction;
 
-    if (winningScore < 55) {
+    // 999 Signal Intelligence confirmation gate:
+    // Require both a strong score and clear separation between BUY and SELL.
+    if (winningScore < 65 || scoreGap < 20) {
       direction = TradeDirection.wait;
     } else if (bullishScore > bearishScore) {
       direction = TradeDirection.buy;
-    } else {
+    } else if (bearishScore > bullishScore) {
       direction = TradeDirection.sell;
+    } else {
+      direction = TradeDirection.wait;
     }
 
-    final confidence = winningScore.clamp(0.0, 100.0).toDouble();
+    // Confidence reflects both setup strength and directional agreement.
+    final agreementBonus = min(scoreGap * 0.20, 10.0);
+    final confidence =
+        (winningScore + agreementBonus).clamp(0.0, 100.0).toDouble();
 
     final isJpy = quote.symbol.contains('JPY');
     final riskDistance = isJpy ? 0.150 : 0.00150;

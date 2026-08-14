@@ -1,5 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'login_screen.dart';
+import 'login_screen.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -807,6 +810,89 @@ class _NexusDashboardState extends State<NexusDashboard> {
                               ),
                             ],
                           ),
+                          Builder(
+                            builder: (context) {
+                              final entryStatus =
+                                  confidence <= 0 || direction == 'WAIT'
+                                      ? 'WAIT'
+                                      : confidence >= 75
+                                          ? 'ENTER NOW'
+                                          : confidence >= 65
+                                              ? 'GET READY'
+                                              : 'WAIT';
+
+                              final entryColor = entryStatus == 'ENTER NOW'
+                                  ? Colors.greenAccent
+                                  : entryStatus == 'GET READY'
+                                      ? Colors.orangeAccent
+                                      : Colors.grey;
+
+                              return Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: entryColor.withValues(alpha: .70),
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: entryColor.withValues(alpha: .08),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            '1-MINUTE ENTRY',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white70,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Text(
+                                            entryStatus,
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w900,
+                                              color: entryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          direction,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          '60 SEC',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.cyanAccent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
                           const SizedBox(height: 14),
                           Text(
                             confidence <= 0
@@ -1099,6 +1185,51 @@ class _NexusDashboardState extends State<NexusDashboard> {
                         ),
                       ),
 
+                      // 999 SIGNAL INTELLIGENCE 2.0 BRANDING
+                      Positioned(
+                        left: 18,
+                        top: 10,
+                        width: 325,
+                        height: 42,
+                        child: Container(
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF07131F),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            '999 SIGNAL INTELLIGENCE 2.0',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: .7,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Positioned(
+                        left: 560,
+                        bottom: 6,
+                        width: 420,
+                        height: 28,
+                        child: Container(
+                          alignment: Alignment.center,
+                          color: const Color(0xFF07131F),
+                          child: const Text(
+                            '999 SIGNAL INTELLIGENCE 2.0',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: .8,
+                            ),
+                          ),
+                        ),
+                      ),
+
                       // TOP AI MODULES
                       hit(
                         left: 65,
@@ -1159,7 +1290,8 @@ class _NexusDashboardState extends State<NexusDashboard> {
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF081727).withValues(alpha: .94),
+                            color:
+                                const Color(0xFF081727).withValues(alpha: .94),
                             border: Border.all(
                               color: Colors.cyanAccent.withValues(alpha: .55),
                             ),
@@ -1476,7 +1608,8 @@ class _NexusDashboardState extends State<NexusDashboard> {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF07131F).withValues(alpha: .96),
+                            color:
+                                const Color(0xFF07131F).withValues(alpha: .96),
                             border: Border.all(
                               color: Colors.cyanAccent.withValues(alpha: .45),
                             ),
@@ -1547,7 +1680,8 @@ class _NexusDashboardState extends State<NexusDashboard> {
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF07131F).withValues(alpha: .96),
+                            color:
+                                const Color(0xFF07131F).withValues(alpha: .96),
                             border: Border.all(
                               color: marketMode == MarketMode.live
                                   ? Colors.greenAccent.withValues(alpha: .55)

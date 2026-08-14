@@ -35,12 +35,46 @@ class ScanSignal {
     required this.timestamp,
   });
 
+  /// Age of this signal using the live market timestamp.
+  Duration get age => DateTime.now().difference(timestamp);
+
+  /// 1-minute trade signals must not remain actionable indefinitely.
+  bool get isExpired => age.inSeconds >= 60;
+
+  /// Entry timing for the current 1-minute setup.
+  ///
+  /// 0-20 sec  = ideal entry window
+  /// 21-45 sec = wait for a fresh confirmation
+  /// 46-59 sec = skip because the setup is too late
+  /// 60+ sec   = expired
+  String get entryTimingText {
+    if (direction == TradeDirection.wait) return 'WAIT';
+
+    final seconds = age.inSeconds;
+
+    if (seconds < 0) return 'WAIT';
+    if (seconds <= 20) return 'ENTER NOW';
+    if (seconds <= 45) return 'WAIT';
+    if (seconds < 60) return 'SKIP';
+
+    return 'EXPIRED';
+  }
+
+  bool get canEnterNow =>
+      !isExpired &&
+      direction != TradeDirection.wait &&
+      entryTimingText == 'ENTER NOW';
+
   String get directionText {
+    if (isExpired && direction != TradeDirection.wait) {
+      return 'SKIP • EXPIRED';
+    }
+
     switch (direction) {
       case TradeDirection.buy:
-        return 'BUY';
+        return 'BUY • $entryTimingText';
       case TradeDirection.sell:
-        return 'SELL';
+        return 'SELL • $entryTimingText';
       case TradeDirection.wait:
         return 'WAIT';
     }

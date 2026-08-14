@@ -51,7 +51,10 @@ class TwelveDataService {
     );
 
     print('TWELVE REQUEST: $symbol | $interval');
+    print('TWELVE REQUEST: \$symbol | \$interval');
     final response = await http.get(uri);
+    print('TWELVE HTTP: \${response.statusCode}');
+    print('TWELVE RESPONSE: \${response.body}');
     print('TWELVE HTTP: ${response.statusCode}');
     print('TWELVE RESPONSE: ${response.body}');
 

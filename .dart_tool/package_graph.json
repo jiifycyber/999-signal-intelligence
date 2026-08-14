@@ -112,6 +112,11 @@
       ]
     },
     {
+      "name": "meta",
+      "version": "1.19.0",
+      "dependencies": []
+    },
+    {
       "name": "collection",
       "version": "1.19.1",
       "dependencies": []
@@ -126,6 +131,11 @@
         "matcher",
         "meta"
       ]
+    },
+    {
+      "name": "vector_math",
+      "version": "2.4.2",
+      "dependencies": []
     },
     {
       "name": "stack_trace",
@@ -692,16 +702,6 @@
       "dependencies": [
         "typed_data"
       ]
-    },
-    {
-      "name": "meta",
-      "version": "1.19.0",
-      "dependencies": []
-    },
-    {
-      "name": "vector_math",
-      "version": "2.4.2",
-      "dependencies": []
     }
   ],
   "configVersion": 1

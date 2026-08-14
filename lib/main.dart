@@ -262,8 +262,8 @@ class _NexusDashboardState extends State<NexusDashboard> {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          splashColor: Colors.cyanAccent.withOpacity(.18),
-          hoverColor: Colors.cyanAccent.withOpacity(.06),
+          splashColor: Colors.cyanAccent.withValues(alpha: .18),
+          hoverColor: Colors.cyanAccent.withValues(alpha: .06),
         ),
       ),
     );
@@ -278,7 +278,7 @@ class _NexusDashboardState extends State<NexusDashboard> {
     final price = currentPriceFor(selectedPair);
 
     if (price == null) {
-      return '--';
+      return 'REST';
     }
 
     final decimals = selectedPair.contains('JPY') ? 3 : 5;
@@ -1159,9 +1159,9 @@ class _NexusDashboardState extends State<NexusDashboard> {
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF081727).withOpacity(.94),
+                            color: const Color(0xFF081727).withValues(alpha: .94),
                             border: Border.all(
-                              color: Colors.cyanAccent.withOpacity(.55),
+                              color: Colors.cyanAccent.withValues(alpha: .55),
                             ),
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -1476,9 +1476,9 @@ class _NexusDashboardState extends State<NexusDashboard> {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF07131F).withOpacity(.96),
+                            color: const Color(0xFF07131F).withValues(alpha: .96),
                             border: Border.all(
-                              color: Colors.cyanAccent.withOpacity(.45),
+                              color: Colors.cyanAccent.withValues(alpha: .45),
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -1547,11 +1547,11 @@ class _NexusDashboardState extends State<NexusDashboard> {
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF07131F).withOpacity(.96),
+                            color: const Color(0xFF07131F).withValues(alpha: .96),
                             border: Border.all(
                               color: marketMode == MarketMode.live
-                                  ? Colors.greenAccent.withOpacity(.55)
-                                  : Colors.orangeAccent.withOpacity(.55),
+                                  ? Colors.greenAccent.withValues(alpha: .55)
+                                  : Colors.orangeAccent.withValues(alpha: .55),
                             ),
                             borderRadius: BorderRadius.circular(7),
                           ),

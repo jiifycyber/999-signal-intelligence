@@ -1,17 +1,13 @@
 import 'dart:async';
-import 'dart:math';
+import 'dart:math' show max, min;
 
 import '../models/forex_quote.dart';
-import 'twelve_data_service.dart';
 import 'twelve_data_stream_service.dart';
 
 enum MarketMode { demo, live }
 
 class MarketDataService {
   MarketMode mode = MarketMode.demo;
-
-  final Random _random = Random();
-  final TwelveDataService _twelveData = TwelveDataService();
   final TwelveDataStreamService _streamService = TwelveDataStreamService();
 
   StreamSubscription<TwelveDataStreamTick>? _streamSubscription;
@@ -20,16 +16,16 @@ class MarketDataService {
 
   String timeframe = 'M1';
 
-  final Map<String, double> _prices = {
-    'EUR/USD': 1.16852,
-    'GBP/USD': 1.26845,
-    'USD/JPY': 155.342,
-    'AUD/USD': 0.66435,
-    'USD/CHF': 0.91045,
-    'USD/CAD': 1.36023,
-    'NZD/USD': 0.61025,
-    'EUR/GBP': 0.85360,
-  };
+  final List<String> _symbols = const [
+    'EUR/USD',
+    'GBP/USD',
+    'USD/JPY',
+    'AUD/USD',
+    'USD/CHF',
+    'USD/CAD',
+    'NZD/USD',
+    'EUR/GBP',
+  ];
 
   final StreamController<List<ForexQuote>> _controller =
       StreamController<List<ForexQuote>>.broadcast();
@@ -40,25 +36,14 @@ class MarketDataService {
 
   void start() {
     _timer?.cancel();
-
-    _refresh();
-
-    _timer = Timer.periodic(
-      Duration(seconds: mode == MarketMode.demo ? 1 : 15),
-      (_) => _refresh(),
-    );
+    _livePrices.clear();
+    _startLiveStream();
   }
 
   void setMode(MarketMode newMode) {
     mode = newMode;
-
-    if (mode == MarketMode.live) {
-      _startLiveStream();
-    } else {
-      _stopLiveStream();
-    }
-
-    start();
+    _livePrices.clear();
+    _startLiveStream();
   }
 
   void setTimeframe(String newTimeframe) {
@@ -70,11 +55,10 @@ class MarketDataService {
     await _streamSubscription?.cancel();
 
     _streamSubscription = _streamService.tickStream.listen((tick) {
+      // PURE LIVE DATA:
+      // Current and previous LIVE prices come only from Twelve Data.
+      final oldPrice = _livePrices[tick.symbol] ?? tick.price;
       _livePrices[tick.symbol] = tick.price;
-
-      final oldPrice = _prices[tick.symbol] ?? tick.price;
-
-      _prices[tick.symbol] = tick.price;
 
       final quote = ForexQuote(
         symbol: tick.symbol,
@@ -91,7 +75,7 @@ class MarketDataService {
     });
 
     try {
-      await _streamService.connect(_prices.keys.toList());
+      await _streamService.connect(_symbols);
     } catch (_) {}
   }
 
@@ -102,66 +86,7 @@ class MarketDataService {
   }
 
   Future<void> _refresh() async {
-    if (mode == MarketMode.demo) {
-      _emitDemoQuotes();
-    } else {
-      await _emitLiveQuotes();
-    }
-  }
-
-  void _emitDemoQuotes() {
-    final now = DateTime.now();
-
-    final quotes = _prices.entries.map((entry) {
-      final symbol = entry.key;
-      final oldPrice = entry.value;
-
-      final isJpy = symbol.contains('JPY');
-
-      final movement = (_random.nextDouble() - 0.5) * (isJpy ? 0.030 : 0.00030);
-
-      final newPrice = oldPrice + movement;
-      _prices[symbol] = newPrice;
-
-      final range = isJpy ? 0.060 : 0.00060;
-
-      return ForexQuote(
-        symbol: symbol,
-        price: newPrice,
-        open: oldPrice,
-        high: max(oldPrice, newPrice) + (_random.nextDouble() * range),
-        low: min(oldPrice, newPrice) - (_random.nextDouble() * range),
-        timestamp: now,
-      );
-    }).toList();
-
-    if (!_controller.isClosed) {
-      _controller.add(quotes);
-    }
-  }
-
-  Future<void> _emitLiveQuotes() async {
-    final quotes = <ForexQuote>[];
-
-    for (final symbol in _prices.keys) {
-      try {
-        final quote = await _twelveData.fetchLatest(
-          symbol,
-          timeframe,
-        );
-
-        if (quote != null) {
-          quotes.add(quote);
-          _prices[symbol] = quote.price;
-        }
-      } catch (e) {
-        // Keep other symbols loading even if one request fails.
-      }
-    }
-
-    if (quotes.isNotEmpty && !_controller.isClosed) {
-      _controller.add(quotes);
-    }
+    // LIVE and DEMO both use genuine Twelve Data ticks only.
   }
 
   void dispose() {

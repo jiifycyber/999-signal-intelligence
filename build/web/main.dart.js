@@ -87868,18 +87868,18 @@ A.aes.prototype={
 $2(a,b){return B.d.aX(b.c,a.c)},
 $S:101}
 A.aeu.prototype={
-akD(b1){var s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9=this,b0=A.b([],t.nw)
-for(s=J.be(b1),r=a9.a;s.q();){q=s.gJ()
+akD(b4){var s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,b0,b1,b2=this,b3=A.b([],t.nw)
+for(s=J.be(b4),r=b2.a;s.q();){q=s.gJ()
 p=q.a
 o=r.bb(p,new A.aew())
 n=q.b
 m=J.cl(o)
 m.C(o,n)
 if(m.gE(o)>200)m.eM(o,0)
-l=a9.Eg(o,9)
-k=a9.Eg(o,21)
-j=a9.Eg(o,50)
-i=a9.ahb(o,14)
+l=b2.Eg(o,9)
+k=b2.Eg(o,21)
+j=b2.Eg(o,50)
+i=b2.ahb(o,14)
 m=l>k
 if(m){h=25
 g=0}else{g=l<k?25:0
@@ -87895,26 +87895,31 @@ if(n>e)h+=10
 else if(n<e)g+=10
 d=Math.max(h,g)
 c=Math.abs(h-g)
-if(d<65||c<20)b=B.iz
-else if(h>g)b=B.iy
-else b=g>h?B.fp:B.iz
-a=B.d.bO(d+Math.min(c*0.2,10),0,100)
-a0=B.c.t(p,"JPY")?0.15:0.0015
-a1=b===B.iy
-a2=a1?n-a0:n+a0
-a3=a1?n+a0:n-a0
-e=a0*2
-a4=a1?n+e:n-e
-e=a0*3
-a5=a1?n+e:n-e
-if(m&&f)a6="STRONG BULLISH"
-else a6=l<k&&k<j?"STRONG BEARISH":"MIXED"
-if(i>=60)a7="STRONG"
-else a7=i<=40?"WEAK":"NEUTRAL"
-if(a1)a8="Trend Continuation"
-else a8=b===B.fp?"Bearish Reversal":"No Confirmed Setup"
-b0.push(new A.fP(p,b,a,d/10,n,a2,a3,a4,a5,a6,a7,a8,q.f))}B.b.e0(b0,new A.aex())
-return b0},
+if(d>=80)b=15
+else b=d>=70?20:25
+if(d<68||c<b)a=B.iz
+else if(h>g)a=B.iy
+else a=g>h?B.fp:B.iz
+a0=Math.min(c*0.15,8)
+if(c<15)a1=12
+else a1=c<25?5:0
+a2=B.d.bO(d+a0-a1,0,100)
+a3=B.c.t(p,"JPY")?0.15:0.0015
+a4=a===B.iy
+a5=a4?n-a3:n+a3
+a6=a4?n+a3:n-a3
+e=a3*2
+a7=a4?n+e:n-e
+e=a3*3
+a8=a4?n+e:n-e
+if(m&&f)a9="STRONG BULLISH"
+else a9=l<k&&k<j?"STRONG BEARISH":"MIXED"
+if(i>=60)b0="STRONG"
+else b0=i<=40?"WEAK":"NEUTRAL"
+if(a4)b1="Trend Continuation"
+else b1=a===B.fp?"Bearish Reversal":"No Confirmed Setup"
+b3.push(new A.fP(p,a,a2,d/10,n,a5,a6,a7,a8,a9,b0,b1,q.f))}B.b.e0(b3,new A.aex())
+return b3},
 Eg(a,b){var s,r,q,p=J.bi(a)
 if(p.gY(a))return 0
 if(p.gE(a)<b)return p.oT(a,new A.aev())/p.gE(a)
